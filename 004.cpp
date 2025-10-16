@@ -131,7 +131,7 @@ void Cuac::escribir(){
     cout << usuario <<" ";
     fecha.escribir();
     cout << endl;
-    cout << "  " << texto << endl;
+    cout << "   " << texto << endl;
 }
 
 //Un cuac es anterior si su fecha es posterior
