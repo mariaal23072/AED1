@@ -2,11 +2,8 @@
 #include <string>
 using namespace std;
 
-// Variables globales
-Cuac cuac_actual;
-int num_cuacs = 0;
-
-string mensajes (int n) {
+//MENSAJES PREDEFINIDOS
+string mensajes(int n) {
     string pcuac[] = {
         "Afirmativo.",
         "Negativo.",
@@ -39,11 +36,11 @@ string mensajes (int n) {
         "Estoy en Egipto. Nunca habia visto las piramides tan solas.",
         "El que quiera saber mas, que se vaya a Salamanca."
     };
-    return pcuac[n-1];
+    return pcuac[n - 1];
 }
 
-// Clase Fecha
-class Fecha{
+// CLASE FECHA
+class Fecha {
 private:
     int dia, mes, anio;
     int hora, minuto, segundo;
@@ -56,44 +53,44 @@ public:
     bool es_igual(Fecha &otra);
 };
 
-Fecha::Fecha(){
+Fecha::Fecha() {
     dia = mes = anio = 0;
     hora = minuto = segundo = 0;
 }
 
-bool Fecha::leer(){
+bool Fecha::leer() {
     char barra1, barra2, dosp1, dosp2;
-    if(!(cin >> dia >> barra1 >> mes >> barra2 >> anio >> hora >> dosp1 >> minuto >> dosp2 >> segundo))
+    if (!(cin >> dia >> barra1 >> mes >> barra2 >> anio >> hora >> dosp1 >> minuto >> dosp2 >> segundo))
         return false;
     return true;
 }
 
-void Fecha::escribir(){
+void Fecha::escribir() {
     cout << dia << "/" << mes << "/" << anio << " ";
-    if(hora < 10) cout << "0";
+    if (hora < 10) cout << "0";
     cout << hora << ":";
-    if(minuto < 10) cout << "0";
+    if (minuto < 10) cout << "0";
     cout << minuto << ":";
-    if(segundo < 10) cout << "0";
+    if (segundo < 10) cout << "0";
     cout << segundo;
 }
 
-bool Fecha::es_menor(Fecha &otra){
-    if(anio != otra.anio) return anio < otra.anio;
-    if(mes != otra.mes) return mes < otra.mes;
-    if(dia != otra.dia) return dia < otra.dia;
-    if(hora != otra.hora) return hora < otra.hora;
-    if(minuto != otra.minuto) return minuto < otra.minuto;
+bool Fecha::es_menor(Fecha &otra) {
+    if (anio != otra.anio) return anio < otra.anio;
+    if (mes != otra.mes) return mes < otra.mes;
+    if (dia != otra.dia) return dia < otra.dia;
+    if (hora != otra.hora) return hora < otra.hora;
+    if (minuto != otra.minuto) return minuto < otra.minuto;
     return segundo < otra.segundo;
 }
 
-bool Fecha::es_igual(Fecha &otra){
+bool Fecha::es_igual(Fecha &otra) {
     return (anio == otra.anio && mes == otra.mes && dia == otra.dia &&
             hora == otra.hora && minuto == otra.minuto && segundo == otra.segundo);
 }
 
-// Clase Cuac
-class Cuac{
+// CLASE CUAC
+class Cuac {
 private:
     Fecha fecha;
     string usuario;
@@ -106,15 +103,15 @@ public:
     bool es_anterior(Cuac &otro);
 };
 
-bool Cuac::leer_mcuac(){
+bool Cuac::leer_mcuac() {
     cin >> usuario;
     fecha.leer();
-    cin.ignore();
+    cin.ignore(); // ignora salto de línea antes del texto
     getline(cin, texto);
     return true;
 }
 
-bool Cuac::leer_pcuac(){
+bool Cuac::leer_pcuac() {
     cin >> usuario;
     fecha.leer();
     int n;
@@ -123,35 +120,37 @@ bool Cuac::leer_pcuac(){
     return true;
 }
 
-void Cuac::escribir(){
+void Cuac::escribir() {
     cout << usuario << " ";
     fecha.escribir();
     cout << endl;
     cout << "   " << texto << endl;
 }
 
-bool Cuac::es_anterior(Cuac &otro){
-    if(fecha.es_igual(otro.fecha))
+bool Cuac::es_anterior(Cuac &otro) {
+    if (fecha.es_igual(otro.fecha))
         return false;
     return otro.fecha.es_menor(fecha);
 }
 
+// Las variables
+Cuac cuac_actual;
+int num_cuacs = 0;
 
-
-// Funciones de procesamiento
-void procesar_mcuac(){
+// Las funciones nuevas para procesar
+void procesar_mcuac() {
     cuac_actual.leer_mcuac();
     num_cuacs++;
     cout << num_cuacs << " cuac" << endl;
 }
 
-void procesar_pcuac(){
+void procesar_pcuac() {
     cuac_actual.leer_pcuac();
     num_cuacs++;
     cout << num_cuacs << " cuac" << endl;
 }
 
-void procesar_last(){
+void procesar_last() {
     int n;
     cin >> n;
     cout << "last " << n << endl;
@@ -160,7 +159,7 @@ void procesar_last(){
     cout << "Total: 1 cuac" << endl;
 }
 
-void procesar_follow(){
+void procesar_follow() {
     string usuario;
     cin >> usuario;
     cout << "follow " << usuario << endl;
@@ -169,21 +168,21 @@ void procesar_follow(){
     cout << "Total: 1 cuac" << endl;
 }
 
-void procesar_date(){
-    Fecha f_inicial, f_final;
-    f_inicial.leer();
-    f_final.leer();
+void procesar_date() {
+    Fecha f1, f2;
+    f1.leer();
+    f2.leer();
     cout << "date ";
-    f_inicial.escribir();
+    f1.escribir();
     cout << " ";
-    f_final.escribir();
+    f2.escribir();
     cout << endl;
     cout << "1. ";
     cuac_actual.escribir();
     cout << "Total: 1 cuac" << endl;
 }
 
-void procesar_tag(){
+void procesar_tag() {
     string etiqueta;
     cin >> etiqueta;
     cout << "tag " << etiqueta << endl;
@@ -192,35 +191,27 @@ void procesar_tag(){
     cout << "Total: 1 cuac" << endl;
 }
 
-// Programa principal
-int main() {
+// Mi Main 
 
+int main() {
     string comando;
 
     while (cin >> comando) {
-        if(comando == "mcuac"){
+        if (comando == "mcuac")
             procesar_mcuac();
-        }
-        else if(comando == "pcuac"){
+        else if (comando == "pcuac")
             procesar_pcuac();
-        }
-        else if(comando == "last"){
+        else if (comando == "last")
             procesar_last();
-        }
-        else if(comando == "follow"){
+        else if (comando == "follow")
             procesar_follow();
-        }
-        else if(comando == "date"){
+        else if (comando == "date")
             procesar_date();
-        }
-        else if(comando == "tag"){
+        else if (comando == "tag")
             procesar_tag();
-        }
-        else if(comando == "exit"){
+        else if (comando == "exit")
             break;
-        }
     }
 
     return 0;
 }
-
