@@ -191,26 +191,33 @@ void procesar_tag() {
     cout << "Total: 1 cuac" << endl;
 }
 
-// Mi Main 
+void procesar_exit() {
+    // No hace nada, solo sirve para salir del programa
+}
 
+void interprete (string comando){
+    if (comando == "mcuac")
+        procesar_mcuac();
+    else if (comando == "pcuac")
+        procesar_pcuac();
+    else if (comando == "last")
+        procesar_last();
+    else if (comando == "follow")
+        procesar_follow();
+    else if (comando == "date")
+        procesar_date();
+    else if (comando == "tag")
+        procesar_tag();
+    else if (comando == "exit")
+        procesar_exit();
+}
+
+// Mi Main 
 int main() {
     string comando;
 
     while (cin >> comando) {
-        if (comando == "mcuac")
-            procesar_mcuac();
-        else if (comando == "pcuac")
-            procesar_pcuac();
-        else if (comando == "last")
-            procesar_last();
-        else if (comando == "follow")
-            procesar_follow();
-        else if (comando == "date")
-            procesar_date();
-        else if (comando == "tag")
-            procesar_tag();
-        else if (comando == "exit")
-            break;
+        interprete(comando);
     }
 
     return 0;
