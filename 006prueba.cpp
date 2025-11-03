@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <vector>
 using namespace std;
 
 // =====================================================
@@ -8,9 +7,12 @@ using namespace std;
 // =====================================================
 string mensajes(int n) {
     string pcuac[] = {
-        "Afirmativo.", "Negativo.", "Estoy de viaje en el extranjero.",
+        "Afirmativo.",
+        "Negativo.",
+        "Estoy de viaje en el extranjero.",
         "Muchas gracias a todos mis seguidores por vuestro apoyo.",
-        "Enhorabuena, campeones!", "Ver las novedades en mi pagina web.",
+        "Enhorabuena, campeones!",
+        "Ver las novedades en mi pagina web.",
         "Estad atentos a la gran exclusiva del siglo.",
         "La inteligencia me persigue pero yo soy mas rapido.",
         "Si no puedes convencerlos, confundelos.",
@@ -48,12 +50,16 @@ private:
     int hora, minuto, segundo;
 
 public:
-    Fecha() { dia = mes = anio = hora = minuto = segundo = 0; }
+    Fecha();
     bool leer();
     void escribir() const;
     bool es_menor(const Fecha &otra) const;
     bool es_igual(const Fecha &otra) const;
 };
+
+Fecha::Fecha() {
+    dia = mes = anio = hora = minuto = segundo = 0;
+}
 
 bool Fecha::leer() {
     char barra1, barra2, dosp1, dosp2;
@@ -134,51 +140,52 @@ bool Cuac::es_anterior(const Cuac &otro) const {
 }
 
 // =====================================================
-// CLASE DICCIONARIO CUACS
+// CLASE DICCIONARIOCUACS (LISTA ORDENADA DE CUACS)
 // =====================================================
 class DiccionarioCuacs {
 private:
-    vector<Cuac> lista;
+    Cuac lista[5000];
+    int n;
 
 public:
+    DiccionarioCuacs() { n = 0; }
     void insertar(const Cuac &c);
-    void mostrar_last(int n) const;
+    void mostrar_last(int num) const;
     void mostrar_follow(const string &nombre) const;
     void mostrar_date(const Fecha &f1, const Fecha &f2) const;
-    int total() const { return lista.size(); }
+    int total() const { return n; }
 };
 
 void DiccionarioCuacs::insertar(const Cuac &c) {
-    // Insertar ordenado de más antiguo a más reciente
-    int pos = 0;
-    while (pos < (int)lista.size() && !c.es_anterior(lista[pos])) pos++;
-    lista.insert(lista.begin() + pos, c);
+    int i = n - 1;
+    while (i >= 0 && c.es_anterior(lista[i])) {
+        lista[i + 1] = lista[i];
+        i--;
+    }
+    lista[i + 1] = c;
+    n++;
 }
 
-void DiccionarioCuacs::mostrar_last(int n) const {
-    cout << "last " << n << endl;
-    int total = lista.size();
-    if (total == 0) { cout << "Total: 0 cuac" << endl; return; }
-
-    int inicio = max(0, total - n);
-    int num = 1;
-    for (int i = total - 1; i >= inicio; i--) {
-        cout << num++ << ". ";
+void DiccionarioCuacs::mostrar_last(int num) const {
+    cout << "last " << num << endl;
+    int mostrados = 0;
+    for (int i = n - 1; i >= 0 && mostrados < num; i--) {
+        cout << ++mostrados << ". ";
         lista[i].escribir();
     }
-    cout << "Total: " << (total - inicio) << " cuac" << endl;
+    cout << "Total: " << mostrados << " cuac" << endl;
 }
 
 void DiccionarioCuacs::mostrar_follow(const string &nombre) const {
     cout << "follow " << nombre << endl;
-    int num = 1;
-    for (int i = lista.size() - 1; i >= 0; i--) {
+    int mostrados = 0;
+    for (int i = n - 1; i >= 0; i--) {
         if (lista[i].get_usuario() == nombre) {
-            cout << num++ << ". ";
+            cout << ++mostrados << ". ";
             lista[i].escribir();
         }
     }
-    cout << "Total: " << (num - 1) << " cuac" << endl;
+    cout << "Total: " << mostrados << " cuac" << endl;
 }
 
 void DiccionarioCuacs::mostrar_date(const Fecha &f1, const Fecha &f2) const {
@@ -187,14 +194,15 @@ void DiccionarioCuacs::mostrar_date(const Fecha &f1, const Fecha &f2) const {
     cout << " ";
     f2.escribir();
     cout << endl;
-    int num = 1;
-    for (int i = lista.size() - 1; i >= 0; i--) {
+
+    int mostrados = 0;
+    for (int i = n - 1; i >= 0; i--) {
         const Fecha &f = lista[i].get_fecha();
-        if ((f2.es_menor(f)) || (f.es_menor(f1))) continue;
-        cout << num++ << ". ";
+        if ((f.es_menor(f1)) || (f2.es_menor(f))) continue;
+        cout << ++mostrados << ". ";
         lista[i].escribir();
     }
-    cout << "Total: " << (num - 1) << " cuac" << endl;
+    cout << "Total: " << mostrados << " cuac" << endl;
 }
 
 // =====================================================
@@ -210,25 +218,30 @@ int main() {
             c.leer_mcuac();
             dic.insertar(c);
             cout << dic.total() << " cuac" << endl;
-        } else if (comando == "pcuac") {
+        }
+        else if (comando == "pcuac") {
             Cuac c;
             c.leer_pcuac();
             dic.insertar(c);
             cout << dic.total() << " cuac" << endl;
-        } else if (comando == "last") {
+        }
+        else if (comando == "last") {
             int n;
             cin >> n;
             dic.mostrar_last(n);
-        } else if (comando == "follow") {
-            string nombre;
-            cin >> nombre;
-            dic.mostrar_follow(nombre);
-        } else if (comando == "date") {
+        }
+        else if (comando == "follow") {
+            string usuario;
+            cin >> usuario;
+            dic.mostrar_follow(usuario);
+        }
+        else if (comando == "date") {
             Fecha f1, f2;
             f1.leer();
             f2.leer();
             dic.mostrar_date(f1, f2);
-        } else if (comando == "exit") {
+        }
+        else if (comando == "exit") {
             break;
         }
     }
