@@ -133,6 +133,71 @@ bool Cuac::es_anterior(const Cuac &otro) const {
     return otro.fecha.es_menor(fecha);
 }
 
+// =============================
+// 005
+// =============================
+// Las variables
+Cuac cuac_actual;
+int num_cuacs = 0;
+
+// Las funciones nuevas para procesar
+void procesar_mcuac() {
+    cuac_actual.leer_mcuac();
+    num_cuacs++;
+    cout << num_cuacs << " cuac" << endl;
+}
+
+void procesar_pcuac() {
+    cuac_actual.leer_pcuac();
+    num_cuacs++;
+    cout << num_cuacs << " cuac" << endl;
+}
+
+void procesar_last() {
+    int n;
+    cin >> n;
+    cout << "last " << n << endl;
+    cout << "1. ";
+    cuac_actual.escribir();
+    cout << "Total: 1 cuac" << endl;
+}
+
+void procesar_follow() {
+    string usuario;
+    cin >> usuario;
+    cout << "follow " << usuario << endl;
+    cout << "1. ";
+    cuac_actual.escribir();
+    cout << "Total: 1 cuac" << endl;
+}
+
+void procesar_date() {
+    Fecha f1, f2;
+    f1.leer();
+    f2.leer();
+    cout << "date ";
+    f1.escribir();
+    cout << " ";
+    f2.escribir();
+    cout << endl;
+    cout << "1. ";
+    cuac_actual.escribir();
+    cout << "Total: 1 cuac" << endl;
+}
+
+void procesar_tag() {
+    string etiqueta;
+    cin >> etiqueta;
+    cout << "tag " << etiqueta << endl;
+    cout << "1. ";
+    cuac_actual.escribir();
+    cout << "Total: 1 cuac" << endl;
+}
+
+void procesar_exit() {
+    // No hace nada, solo sirve para salir del programa
+}
+
 // =====================================================
 // CLASE DICCIONARIO CUACS
 // =====================================================
@@ -197,40 +262,45 @@ void DiccionarioCuacs::mostrar_date(const Fecha &f1, const Fecha &f2) const {
     cout << "Total: " << (num - 1) << " cuac" << endl;
 }
 
+void interprete (string comando){
+    DiccionarioCuacs dic;
+    if (comando == "mcuac") {
+        Cuac c;
+        c.leer_mcuac();
+        dic.insertar(c);
+        cout << dic.total() << " cuac" << endl;
+    } else if (comando == "pcuac") {
+        Cuac c;
+        c.leer_pcuac();
+        dic.insertar(c);
+        cout << dic.total() << " cuac" << endl;
+    } else if (comando == "last") {
+        int n;
+        cin >> n;
+        dic.mostrar_last(n);
+    } else if (comando == "follow") {
+        string nombre;
+        cin >> nombre;
+        dic.mostrar_follow(nombre);
+    } else if (comando == "date") {
+        Fecha f1, f2;
+        f1.leer();
+        f2.leer();
+        dic.mostrar_date(f1, f2);
+    } else if (comando == "exit") {
+        procesar_exit();
+    }
+}
+
+
 // =====================================================
 // MAIN (INTERPRETE DE COMANDOS)
 // =====================================================
 int main() {
-    DiccionarioCuacs dic;
     string comando;
 
     while (cin >> comando) {
-        if (comando == "mcuac") {
-            Cuac c;
-            c.leer_mcuac();
-            dic.insertar(c);
-            cout << dic.total() << " cuac" << endl;
-        } else if (comando == "pcuac") {
-            Cuac c;
-            c.leer_pcuac();
-            dic.insertar(c);
-            cout << dic.total() << " cuac" << endl;
-        } else if (comando == "last") {
-            int n;
-            cin >> n;
-            dic.mostrar_last(n);
-        } else if (comando == "follow") {
-            string nombre;
-            cin >> nombre;
-            dic.mostrar_follow(nombre);
-        } else if (comando == "date") {
-            Fecha f1, f2;
-            f1.leer();
-            f2.leer();
-            dic.mostrar_date(f1, f2);
-        } else if (comando == "exit") {
-            break;
-        }
+        interprete(comando);
     }
 
     return 0;
