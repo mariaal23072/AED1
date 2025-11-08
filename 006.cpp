@@ -1,16 +1,19 @@
 #include <iostream>
 #include <string>
-#include <vector>
+#include <list>
 using namespace std;
 
-// =====================================================
-// MENSAJES PREDEFINIDOS
-// =====================================================
+
+
+//MENSAJES PREDEFINIDOS
 string mensajes(int n) {
     string pcuac[] = {
-        "Afirmativo.", "Negativo.", "Estoy de viaje en el extranjero.",
+        "Afirmativo.",
+        "Negativo.",
+        "Estoy de viaje en el extranjero.",
         "Muchas gracias a todos mis seguidores por vuestro apoyo.",
-        "Enhorabuena, campeones!", "Ver las novedades en mi pagina web.",
+        "Enhorabuena, campeones!",
+        "Ver las novedades en mi pagina web.",
         "Estad atentos a la gran exclusiva del siglo.",
         "La inteligencia me persigue pero yo soy mas rapido.",
         "Si no puedes convencerlos, confundelos.",
@@ -39,21 +42,26 @@ string mensajes(int n) {
     return pcuac[n - 1];
 }
 
-// =====================================================
+// ========== 003 ===========
+
 // CLASE FECHA
-// =====================================================
 class Fecha {
 private:
     int dia, mes, anio;
     int hora, minuto, segundo;
 
 public:
-    Fecha() { dia = mes = anio = hora = minuto = segundo = 0; }
+    Fecha();
     bool leer();
-    void escribir() const;
-    bool es_menor(const Fecha &otra) const;
-    bool es_igual(const Fecha &otra) const;
+    void escribir();
+    bool es_menor(Fecha &otra);
+    bool es_igual(Fecha &otra);
 };
+
+Fecha::Fecha() {
+    dia = mes = anio = 0;
+    hora = minuto = segundo = 0;
+}
 
 bool Fecha::leer() {
     char barra1, barra2, dosp1, dosp2;
@@ -62,7 +70,7 @@ bool Fecha::leer() {
     return true;
 }
 
-void Fecha::escribir() const {
+void Fecha::escribir() {
     cout << dia << "/" << mes << "/" << anio << " ";
     if (hora < 10) cout << "0";
     cout << hora << ":";
@@ -72,7 +80,7 @@ void Fecha::escribir() const {
     cout << segundo;
 }
 
-bool Fecha::es_menor(const Fecha &otra) const {
+bool Fecha::es_menor(Fecha &otra) {
     if (anio != otra.anio) return anio < otra.anio;
     if (mes != otra.mes) return mes < otra.mes;
     if (dia != otra.dia) return dia < otra.dia;
@@ -81,14 +89,13 @@ bool Fecha::es_menor(const Fecha &otra) const {
     return segundo < otra.segundo;
 }
 
-bool Fecha::es_igual(const Fecha &otra) const {
+bool Fecha::es_igual(Fecha &otra) {
     return (anio == otra.anio && mes == otra.mes && dia == otra.dia &&
             hora == otra.hora && minuto == otra.minuto && segundo == otra.segundo);
 }
 
-// =====================================================
+// ============ 004 ===========
 // CLASE CUAC
-// =====================================================
 class Cuac {
 private:
     Fecha fecha;
@@ -98,11 +105,10 @@ private:
 public:
     bool leer_mcuac();
     bool leer_pcuac();
-    void escribir() const;
-    const Fecha& get_fecha() const { return fecha; }
-    const string& get_usuario() const { return usuario; }
-    const string& get_texto() const { return texto; }
-    bool es_anterior(const Cuac &otro) const;
+    void escribir();
+    bool es_anterior(Cuac &otro);
+    string get_usuario() {return usuario;} // usado en 006
+    Fecha get_fecha() {return fecha;} // usado en 006
 };
 
 bool Cuac::leer_mcuac() {
@@ -122,67 +128,138 @@ bool Cuac::leer_pcuac() {
     return true;
 }
 
-void Cuac::escribir() const {
+void Cuac::escribir() {
     cout << usuario << " ";
     fecha.escribir();
-    cout << endl << "   " << texto << endl;
+    cout << endl;
+    cout << "   " << texto << endl;
 }
 
-bool Cuac::es_anterior(const Cuac &otro) const {
-    if (fecha.es_igual(otro.fecha)) return false;
-    return otro.fecha.es_menor(fecha);
+// Adaptada al 006
+bool Cuac::es_anterior(Cuac &otro) {
+    // Orden por fecha
+    if (!fecha.es_igual(otro.fecha)) return otro.fecha.es_menor(fecha);
+    // Si no, orden por texto
+    if (texto != otro.texto) return texto < otro.texto;
+    // Si no, orden por usuario
+    return usuario < otro.usuario;
 }
 
-// =============================
-// 005
-// =============================
-// Las variables
-Cuac cuac_actual;
-int num_cuacs = 0;
+// ============= CLASE DEL 006 =============
+class DiccionarioCuacs {
+private:
+   list<Cuac> lista;
+   int contador;
+public:
+    DiccionarioCuacs ();
+    void insertar(Cuac nuevo);
+    void last(int N);
+    void follow(string nombre);
+    void date(Fecha f1, Fecha f2);
+    int numElem()
+        {return contador;}
+};
 
-// Las funciones nuevas para procesar
+// Variable global 006
+DiccionarioCuacs dic;
+
+DiccionarioCuacs::DiccionarioCuacs (){
+    contador = 0;
+}
+
+void DiccionarioCuacs::insertar(Cuac nuevo){
+    list<Cuac>::iterator it = lista.begin();
+    while (it != lista.end() && (*it).es_anterior(nuevo)) {
+        it++;
+    }
+    lista.insert(it, nuevo);
+    contador++;
+}
+
+void DiccionarioCuacs::last(int N) {
+    int cont = 0;
+    list<Cuac>::iterator it = lista.begin();
+    for (it = lista.begin(); cont < N && it !=lista.end(); it++) {
+        cout << (cont + 1) << ". ";
+        (*it).escribir();
+        cont++;
+    }
+    cout << "Total: " << cont << " cuac" << endl;
+}
+
+void DiccionarioCuacs::follow(string nombre) {
+    int cont = 0;
+    list<Cuac>::iterator it = lista.begin();
+    for (it = lista.begin(); it !=lista.end(); it++) {
+        if ((*it).get_usuario() == nombre) {
+            cout << (cont + 1) << ". ";
+            (*it).escribir();
+            cont++;
+        }        
+    }
+    cout << "Total: " << cont << " cuac" << endl;
+}
+
+void DiccionarioCuacs::date(Fecha f1, Fecha f2) {
+    int cont = 0;
+    list<Cuac>::iterator it = lista.begin();
+    for (it = lista.begin(); it !=lista.end(); it++) {
+        // Si f1 < it.fecha <= f2
+        if (!((*it).get_fecha().es_menor(f1)) && ( ((*it).get_fecha().es_menor(f2)) || (*it).get_fecha().es_igual(f2) ) ) {
+            cout << (cont + 1) << ". ";
+            (*it).escribir();
+            cont++;
+        }
+    }
+    cout << "Total: " << cont << " cuac" << endl;
+}
+// =========== FIN 006 ===========
+
+
+// ============ 005 ===========
+// variables
+int contador = 0;
+Cuac actual;
+
+// funciones para procesar
 void procesar_mcuac() {
-    cuac_actual.leer_mcuac();
-    num_cuacs++;
-    cout << num_cuacs << " cuac" << endl;
+    Cuac nuevo;
+    nuevo.leer_mcuac();
+    dic.insertar(nuevo);
+    cout << dic.numElem() << " cuac" << endl;
 }
 
 void procesar_pcuac() {
-    cuac_actual.leer_pcuac();
-    num_cuacs++;
-    cout << num_cuacs << " cuac" << endl;
+    Cuac nuevo;
+    nuevo.leer_pcuac();
+    dic.insertar(nuevo);
+    cout << dic.numElem() << " cuac" << endl;
 }
 
 void procesar_last() {
     int n;
     cin >> n;
     cout << "last " << n << endl;
-    cout << "1. ";
-    cuac_actual.escribir();
-    cout << "Total: 1 cuac" << endl;
+    dic.last(n);
 }
 
 void procesar_follow() {
-    string usuario;
-    cin >> usuario;
-    cout << "follow " << usuario << endl;
-    cout << "1. ";
-    cuac_actual.escribir();
-    cout << "Total: 1 cuac" << endl;
+    string nombre;
+    cin >> nombre;
+    cout << "follow " << nombre << endl;
+    dic.follow(nombre);
 }
 
 void procesar_date() {
-    Fecha f1, f2;
-    f1.leer();
-    f2.leer();
+    Fecha fmin, fmax;
+    fmin.leer();
+    fmax.leer();
     cout << "date ";
-    f1.escribir();
+    fmin.escribir();
     cout << " ";
-    f2.escribir();
+    fmax.escribir();
     cout << endl;
-    cout << "1. ";
-    cuac_actual.escribir();
-    cout << "Total: 1 cuac" << endl;
+    dic.date(fmin, fmax);
 }
 
 void procesar_tag() {
@@ -190,117 +267,27 @@ void procesar_tag() {
     cin >> etiqueta;
     cout << "tag " << etiqueta << endl;
     cout << "1. ";
-    cuac_actual.escribir();
+    actual.escribir();
     cout << "Total: 1 cuac" << endl;
 }
 
-void procesar_exit() {
-    // No hace nada, solo sirve para salir del programa
+
+
+void Interprete (string comando){
+    if (comando == "pcuac") procesar_pcuac();
+    else if (comando == "mcuac") procesar_mcuac();
+    else if (comando == "last") procesar_last();
+    else if (comando == "follow") procesar_follow();
+    else if (comando == "date") procesar_date();
+    else if (comando == "tag") procesar_tag();
 }
 
-// =====================================================
-// CLASE DICCIONARIO CUACS
-// =====================================================
-class DiccionarioCuacs {
-private:
-    vector<Cuac> lista;
-
-public:
-    void insertar(const Cuac &c);
-    void mostrar_last(int n) const;
-    void mostrar_follow(const string &nombre) const;
-    void mostrar_date(const Fecha &f1, const Fecha &f2) const;
-    int total() const { return lista.size(); }
-};
-
-void DiccionarioCuacs::insertar(const Cuac &c) {
-    // Insertar ordenado de más antiguo a más reciente
-    int pos = 0;
-    while (pos < (int)lista.size() && !c.es_anterior(lista[pos])) pos++;
-    lista.insert(lista.begin() + pos, c);
-}
-
-void DiccionarioCuacs::mostrar_last(int n) const {
-    cout << "last " << n << endl;
-    int total = lista.size();
-    if (total == 0) { cout << "Total: 0 cuac" << endl; return; }
-
-    int inicio = max(0, total - n);
-    int num = 1;
-    for (int i = total - 1; i >= inicio; i--) {
-        cout << num++ << ". ";
-        lista[i].escribir();
-    }
-    cout << "Total: " << (total - inicio) << " cuac" << endl;
-}
-
-void DiccionarioCuacs::mostrar_follow(const string &nombre) const {
-    cout << "follow " << nombre << endl;
-    int num = 1;
-    for (int i = lista.size() - 1; i >= 0; i--) {
-        if (lista[i].get_usuario() == nombre) {
-            cout << num++ << ". ";
-            lista[i].escribir();
-        }
-    }
-    cout << "Total: " << (num - 1) << " cuac" << endl;
-}
-
-void DiccionarioCuacs::mostrar_date(const Fecha &f1, const Fecha &f2) const {
-    cout << "date ";
-    f1.escribir();
-    cout << " ";
-    f2.escribir();
-    cout << endl;
-    int num = 1;
-    for (int i = lista.size() - 1; i >= 0; i--) {
-        const Fecha &f = lista[i].get_fecha();
-        if ((f2.es_menor(f)) || (f.es_menor(f1))) continue;
-        cout << num++ << ". ";
-        lista[i].escribir();
-    }
-    cout << "Total: " << (num - 1) << " cuac" << endl;
-}
-
-void interprete (string comando){
-    DiccionarioCuacs dic;
-    if (comando == "mcuac") {
-        Cuac c;
-        c.leer_mcuac();
-        dic.insertar(c);
-        cout << dic.total() << " cuac" << endl;
-    } else if (comando == "pcuac") {
-        Cuac c;
-        c.leer_pcuac();
-        dic.insertar(c);
-        cout << dic.total() << " cuac" << endl;
-    } else if (comando == "last") {
-        int n;
-        cin >> n;
-        dic.mostrar_last(n);
-    } else if (comando == "follow") {
-        string nombre;
-        cin >> nombre;
-        dic.mostrar_follow(nombre);
-    } else if (comando == "date") {
-        Fecha f1, f2;
-        f1.leer();
-        f2.leer();
-        dic.mostrar_date(f1, f2);
-    } else if (comando == "exit") {
-        procesar_exit();
-    }
-}
-
-
-// =====================================================
-// MAIN (INTERPRETE DE COMANDOS)
-// =====================================================
+// =============================
 int main() {
     string comando;
 
-    while (cin >> comando) {
-        interprete(comando);
+    while (cin >> comando && comando!="exit") {
+        Interprete(comando);
     }
 
     return 0;
