@@ -148,8 +148,9 @@ bool Cuac::es_anterior(Cuac &otro) {
 // ============= CLASE DEL 006 =============
 class DiccionarioCuacs {
 private:
-   list<Cuac> lista;
-   int contador;
+    list<Cuac> lista;
+    int contador;
+    TablaHash tabla; // cambiado para 200
 public:
     DiccionarioCuacs ();
     void insertar(Cuac nuevo);
@@ -176,7 +177,7 @@ void DiccionarioCuacs::insertar(Cuac nuevo){
     contador++;
 }
 
-void DiccionarioCuacs::last(int N) {
+/**void DiccionarioCuacs::last(int N) {
     int cont = 0;
     list<Cuac>::iterator it;
     for (it = lista.begin(); cont < N && it !=lista.end(); it++) {
@@ -185,7 +186,7 @@ void DiccionarioCuacs::last(int N) {
         cont++;
     }
     cout << "Total: " << cont << " cuac" << endl;
-}
+}**/
 
 void DiccionarioCuacs::follow(string nombre) {
     int cont = 0;
@@ -200,7 +201,7 @@ void DiccionarioCuacs::follow(string nombre) {
     cout << "Total: " << cont << " cuac" << endl;
 }
 
-void DiccionarioCuacs::date(Fecha f1, Fecha f2) {
+/**void DiccionarioCuacs::date(Fecha f1, Fecha f2) {
     int cont = 0;
     list<Cuac>::iterator it;
     for (it = lista.begin(); it !=lista.end(); it++) {
@@ -212,7 +213,7 @@ void DiccionarioCuacs::date(Fecha f1, Fecha f2) {
         }
     }
     cout << "Total: " << cont << " cuac" << endl;
-}
+}**/
 // =========== FIN 006 ===========
 
 
@@ -281,9 +282,53 @@ void Interprete (string comando){
 }
 
 // ========== 200 ==========
+const int M = 100; // tamaño
+
+list<Par> T[M];
+class Par {
+    friend class TablaHash;
+    string nombre;
+    list<Cuac> l;
+};
+
+class TablaHash {
+private:
+    list<Par> T[M];
+    int nElem; // nº usuarios
+    int h (string k); // función hash
+public:
+    TablaHash ();
+    void insertar (Cuac nuevo);
+    void consultar (string nombre);
+    int numElem (void) { return nElem; }
+};
 
 
 
+// Función hash
+int TablaHash::h (string k) {
+    unsigned long res = 0;
+    for (int i = 0; i < k.size(); i++) {
+        res = res * 67;
+        res = res + k[i];
+    }
+    return res % M;
+}
+
+void TablaHash::insertar(Cuac nuevo) {
+    string usuario = nuevo.get_usuario();
+    int pos = h(usuario);
+    list<Par>::iterator it = T[pos].begin();
+    for (it; it != T[pos].end(); it++) {
+        if ((*it).nombre == usuario) {
+            // Usuario encontrado
+            (*it).l.push_back(nuevo);
+            return;
+        }
+        // ...PARA TERMINAR....
+    }
+    
+}
 
 
 
