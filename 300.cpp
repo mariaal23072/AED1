@@ -199,7 +199,8 @@ Cuac* TablaHash::insertar(Cuac nuevo) {
                 it2++;
             }
             (*it).l.insert(it2,nuevo); // insertar nuevo cuac en la lista
-            return (&(*(it2))); // REVISAR
+            it2--;
+            return &*it2; // REVISAR
         }
     }
     // Usuario no encontrado
@@ -208,6 +209,9 @@ Cuac* TablaHash::insertar(Cuac nuevo) {
     p.l.push_back(nuevo); // insertar nuevo al final de la lista l del par
     T[pos].push_back(p); // insertar par en el sitio de la tabla correspondiente
     nElem++; // aumentar nº usuarios 
+    // REVISAR:
+    list<Cuac>::iterator it2 = T[pos].back().l.begin();
+    return &*it2;
 }
 
 void TablaHash::consultar (string nombre) {
@@ -240,18 +244,16 @@ void TablaHash::consultar (string nombre) {
 // CLASE NODO
 class Nodo {
    private:
-    Nodo *hijo;
     Cuac *cuac;
     int altura;
     Nodo *izq;
     Nodo *der;
 
    public:
-    Nodo *RSI;
     Nodo (); // constructor
     ~Nodo () { // destructor
-        delete hijo; 
-        delete RSI; 
+        delete izq;
+        delete der;
     } 
 };
 
