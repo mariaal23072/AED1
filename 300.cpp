@@ -195,12 +195,13 @@ Cuac* TablaHash::insertar(Cuac nuevo) {
         if ( (*it).nombre == usuario ) {
             // Usuario encontrado
             list<Cuac>::iterator it2 = (*it).l.begin();
+            // Busqueda ordenada por fecha dentro de la lista de cuacs del usuario
             while (it2 != (*it).l.end() && (*it2).es_anterior(nuevo)) {
                 it2++;
             }
             (*it).l.insert(it2,nuevo); // insertar nuevo cuac en la lista
             it2--;
-            return &*it2; // REVISAR
+            return &(*it2);
         }
     }
     // Usuario no encontrado
@@ -208,10 +209,15 @@ Cuac* TablaHash::insertar(Cuac nuevo) {
     p.nombre = usuario;
     p.l.push_back(nuevo); // insertar nuevo al final de la lista l del par
     T[pos].push_back(p); // insertar par en el sitio de la tabla correspondiente
-    nElem++; // aumentar nº usuarios 
-    // REVISAR:
-    list<Cuac>::iterator it2 = T[pos].back().l.begin();
-    return &*it2;
+    nElem++; // aumentar nº usuarios
+    
+    // Cambiado para 300
+    list<Par>::iterator itPar = T[pos].end(); // Vamos al final de la lista de usuarios
+    itPar--; // Apuntamos al usuario que acabamos de insertar (Par p)
+    
+    list<Cuac>::iterator itCuac = (*itPar).l.end(); // Vamos al final de la lista de cuacs de ese usuario
+    itCuac--; // Apuntamos al cuac que acabamos de insertar
+    return &(*itCuac); // devolvemos la referencia al cuac insertado
 }
 
 void TablaHash::consultar (string nombre) {
@@ -240,9 +246,10 @@ void TablaHash::consultar (string nombre) {
 // ============ FIN 200 =============
 
 // ============= 300 ==============
-
+class Arbol; // declaración adelantada
 // CLASE NODO
 class Nodo {
+    friend class Arbol; // para que Arbol pueda acceder a los atributos privados de Nodo
    private:
     Cuac *cuac;
     int altura;
@@ -250,7 +257,12 @@ class Nodo {
     Nodo *der;
 
    public:
-    Nodo (); // constructor
+    Nodo (Cuac *c) { // constructor
+        cuac = c;
+        altura = 0;
+        izq = NULL;
+        der = NULL;
+    }; // constructor
     ~Nodo () { // destructor
         delete izq;
         delete der;
@@ -261,7 +273,17 @@ class Nodo {
 class Arbol {
   private:
     Nodo *raiz;
-    void RSI (Nodo *&A); // se actualiza la nueva raiz
+    void RSI (Nodo *&A); // rotación simple izquierda
+    void RSD (Nodo *&A); // rotación simple derecha
+    void RDI (Nodo *&A); // rotación doble izquierda
+    void RDD (Nodo *&A); // rotación doble derecha
+    
+    int max (int a, int b); // para calcular rotaciones
+    int Altura (Nodo *n);
+    void insertar2 (Nodo *&n, Cuac *ref); // para poder insertar con parámetro Nodo
+    void last2 (Nodo *n, int &N, int &cont); // para poder hacer last con parámetro Nodo
+    void date2 (Nodo *n, Fecha f1, Fecha f2, int &cont); // para poder hacer date con parámetro Nodo
+
   public:
     Arbol ();
     ~Arbol () {
@@ -273,8 +295,136 @@ class Arbol {
 };
 
 Arbol::Arbol () {
-    raiz = nullptr;
+    raiz = NULL;
 }
+
+int Arbol::Altura (Nodo *n) {
+    if (n == NULL) return -1;
+    return n->altura;
+}
+
+int Arbol::max (int a, int b) {
+    if (a > b) return a;
+    else return b;
+}
+
+// Según las diapositivas del Tema 3:
+void Arbol::RSI (Nodo *&A) {
+    Nodo *B = A->izq;
+    A->izq = B->der;
+    B->der = A;
+    A->altura = 1 + max(Altura(A->izq), Altura(A->der));
+    B->altura = 1 + max(Altura(B->izq), A->altura);
+    A = B;
+}
+
+void Arbol::RSD (Nodo *&A) {
+    Nodo *B = A->der;
+    A->der = B->izq;
+    B->izq = A;
+    A->altura = 1 + max(Altura(A->izq), Altura(A->der));
+    B->altura = 1 + max(Altura(B->izq), A->altura);
+    A = B;
+}
+
+void Arbol::RDI (Nodo *&A) {
+    RSD(A->izq);
+    RSI(A);
+}
+
+void Arbol::RDD (Nodo *&A) {
+    RSI(A->der);
+    RSD(A);
+}
+
+void Arbol::insertar (Cuac *ref) {
+    insertar2(raiz, ref);
+}
+
+// Siguiendo la diapositiva 69 de T3:
+void Arbol::insertar2(Nodo *&n, Cuac *ref) { 
+    // Si el nodo es nulo, creamos uno nuevo
+    if (n == NULL) {
+        n = new Nodo(ref);
+    }
+    else {
+        // Si el nuevo es anterior (más reciente) -> Subárbol Izquierdo
+        if (ref->es_anterior(*(n->cuac))) {  // ref < n->cuac
+            insertar2(n->izq, ref);
+            
+            // Rebalanceo tras insertar en izquierda
+            if (Altura(n->izq) - Altura(n->der) > 1) {
+                if (ref->es_anterior(*(n->izq->cuac))) // ref < n->izq->cuac
+                    RSI(n); // Caso II
+                else
+                    RDI(n); // Caso ID
+            }
+            else {
+                n->altura = 1 + max(Altura(n->izq), Altura(n->der));
+            }
+        } 
+        else { 
+            // Si es posterior o igual -> Subárbol Derecho
+            insertar2(n->der, ref);
+            
+            // Rebalanceo tras insertar en derecha
+            if (Altura(n->der) - Altura(n->izq) > 1) {
+
+                if (!ref->es_anterior(*(n->der->cuac))) // ref >= n->der->cuac
+                    RSD(n); // Caso DD
+                else
+                    RDD(n); // Caso DI
+            }
+            else {
+                n->altura = 1 + max(Altura(n->izq), Altura(n->der));
+            }
+        }
+    }
+
+}
+
+void Arbol::last(int N) {
+    int cont = 0; // contador de cuacs impresos
+    last2(raiz, N, cont);
+    cout << "Total: " << cont << " cuac" << endl;
+}
+
+void Arbol::last2(Nodo *n, int &N, int &cont) {
+    // Si el nodo es nulo o ya hemos impreso los N mensajes que queríamos, paramos.
+    if (n == NULL || N == 0) return;
+
+    // Recorremos primero la izq (más recientes)
+    last2(n->izq, N, cont);
+
+    // Luego el nodo actual
+    if (N > 0) { // Si aún quedan cuacs por imprimir
+        cont++;
+        cout << cont << ". ";
+        n->cuac->escribir();
+        N--; // Decrementamos N cada vez que imprimimos un cuac
+    } 
+    else {
+        return; // Si ya hemos impreso N cuacs, salimos
+    }
+
+    // Recorremos luego la der (menos recientes)
+    last2(n->der, N, cont);
+}
+
+// -- 301 --
+void Arbol::date(Fecha f1, Fecha f2) {
+    int cont = 0; // contador de cuacs impresos
+    date2(raiz, f1, f2, cont);
+    cout << "Total: " << cont << " cuac" << endl;
+}
+
+void Arbol::date2(Nodo *n, Fecha f1, Fecha f2, int &cont) {
+    //  Terminar en el 301
+}
+
+
+
+
 
 // ============ FIN 300 ===========
 
@@ -305,7 +455,8 @@ DiccionarioCuacs::DiccionarioCuacs (){
 
 void DiccionarioCuacs::insertar(Cuac nuevo){
     Cuac *ref = tabla.insertar(nuevo); // cambiado para 300
-    arbol.insertar(ref); // cambiado para 300    
+    arbol.insertar(ref); // cambiado para 300
+    contador++;   
 }
 
 void DiccionarioCuacs::last(int N) {
