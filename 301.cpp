@@ -411,19 +411,43 @@ void Arbol::last2(Nodo *n, int &N, int &cont) {
     last2(n->der, N, cont);
 }
 
-// -- 301 --
+// Para 301
 void Arbol::date(Fecha f1, Fecha f2) {
     int cont = 0; // contador de cuacs impresos
     date2(raiz, f1, f2, cont);
     cout << "Total: " << cont << " cuac" << endl;
 }
 
+// =========== FIN 300 ===========
+
+// ========= 301 =========
+
 void Arbol::date2(Nodo *n, Fecha f1, Fecha f2, int &cont) {
-    //  Terminar en el 301
+    if (n == NULL) return; // nodo nulo, salimos
+
+    Fecha f = n->cuac->get_fecha();
+
+    // Uso IFs para no recorrer subárboles innecesarios
+
+    // Ir al subárbol izquierdo si la fecha actual no se pasa de f2
+    if (f.es_menor(f2) || f.es_igual(f2)) {
+        date2(n->izq, f1, f2, cont);
+    }
+
+    // Si la fecha actual está entre f1 y f2, lo escribimos
+    if ((f.es_menor(f2) || f.es_igual(f2)) && (f1.es_menor(f) || f1.es_igual(f))) {
+        cont++;
+        cout << cont << ". ";
+        n->cuac->escribir();
+    }
+
+    // Ir al subárbol derecho si la fecha actual no es anterior a f1
+    if (f1.es_menor(f) || f1.es_igual(f)) {
+        date2(n->der, f1, f2, cont);
+    }
 }
 
-// ============ FIN 300 ===========
-
+// ======== FIN 301 ===========
 
 
 // ============= CLASE DEL 006 =============
