@@ -42,7 +42,6 @@ string mensajes(int n) {
     return pcuac[n - 1];
 }
 
-// ========== 003 ===========
 
 // CLASE FECHA
 class Fecha {
@@ -94,7 +93,6 @@ bool Fecha::es_igual(Fecha &otra) {
             hora == otra.hora && minuto == otra.minuto && segundo == otra.segundo);
 }
 
-// ============ 004 ===========
 // CLASE CUAC
 class Cuac {
 private:
@@ -145,10 +143,6 @@ bool Cuac::es_anterior(Cuac &otro) {
     return usuario < otro.usuario;
 }
 
-// ============ FIN 004 ===========
-
-
-// ============= 200 ==============
 
 // CLASE PAR
 class Par { // "carpeta de cada usuario"
@@ -167,7 +161,7 @@ private:
     int h (string k); // función hash
 public:
     TablaHash ();
-    void insertar (Cuac nuevo);
+    Cuac* insertar (Cuac nuevo);
     void consultar (string nombre);
     int numElem (void) { return nElem; }
 };
@@ -186,7 +180,7 @@ int TablaHash::h (string k) {
     return res % M;
 }
 
-void TablaHash::insertar(Cuac nuevo) {
+Cuac* TablaHash::insertar(Cuac nuevo) {
     string usuario = nuevo.get_usuario();
     int pos = h(usuario); // calcular posición
 
@@ -195,11 +189,13 @@ void TablaHash::insertar(Cuac nuevo) {
         if ( (*it).nombre == usuario ) {
             // Usuario encontrado
             list<Cuac>::iterator it2 = (*it).l.begin();
+            // Busqueda ordenada por fecha dentro de la lista de cuacs del usuario
             while (it2 != (*it).l.end() && (*it2).es_anterior(nuevo)) {
                 it2++;
             }
             (*it).l.insert(it2,nuevo); // insertar nuevo cuac en la lista
-            return;
+            it2--;
+            return &(*it2);
         }
     }
     // Usuario no encontrado
@@ -207,7 +203,14 @@ void TablaHash::insertar(Cuac nuevo) {
     p.nombre = usuario;
     p.l.push_back(nuevo); // insertar nuevo al final de la lista l del par
     T[pos].push_back(p); // insertar par en el sitio de la tabla correspondiente
-    nElem++; // aumentar nº usuarios 
+    nElem++; // aumentar nº usuarios
+    
+    list<Par>::iterator itPar = T[pos].end(); // Vamos al final de la lista de usuarios
+    itPar--; // Apuntamos al usuario que acabamos de insertar (Par p)
+    
+    list<Cuac>::iterator itCuac = (*itPar).l.end(); // Vamos al final de la lista de cuacs de ese usuario
+    itCuac--; // Apuntamos al cuac que acabamos de insertar
+    return &(*itCuac); // devolvemos la referencia al cuac insertado
 }
 
 void TablaHash::consultar (string nombre) {
@@ -233,14 +236,208 @@ void TablaHash::consultar (string nombre) {
 
 }
 
-// ============ FIN 200 =============
+// CLASE NODO
+class Nodo {
+    friend class Arbol; // para que Arbol pueda acceder a los atributos privados de Nodo
+   private:
+    Cuac *cuac;
+    int altura;
+    Nodo *izq;
+    Nodo *der;
+
+   public:
+    Nodo (Cuac *c) { // constructor
+        cuac = c;
+        altura = 0;
+        izq = NULL;
+        der = NULL;
+    }; // constructor
+    ~Nodo () { // destructor
+        delete izq;
+        delete der;
+    } 
+};
+
+// CLASE ARBOL AVL
+class Arbol {
+  private:
+    Nodo *raiz;
+    void RSI (Nodo *&A); // rotación simple izquierda
+    void RSD (Nodo *&A); // rotación simple derecha
+    void RDI (Nodo *&A); // rotación doble izquierda
+    void RDD (Nodo *&A); // rotación doble derecha
+    
+    int max (int a, int b); // para calcular rotaciones
+    int Altura (Nodo *n);
+    void insertar2 (Nodo *&n, Cuac *ref); // para poder insertar con parámetro Nodo
+    void last2 (Nodo *n, int &N, int &cont); // para poder hacer last con parámetro Nodo
+    void date2 (Nodo *n, Fecha f1, Fecha f2, int &cont); // para poder hacer date con parámetro Nodo
+
+  public:
+    Arbol ();
+    ~Arbol () {
+        delete raiz;
+    }
+    void insertar (Cuac *ref);
+    void last (int N);
+    void date (Fecha f1, Fecha f2);
+};
+
+Arbol::Arbol () {
+    raiz = NULL;
+}
+
+int Arbol::Altura (Nodo *n) {
+    if (n == NULL) return -1;
+    return n->altura;
+}
+
+int Arbol::max (int a, int b) {
+    if (a > b) return a;
+    else return b;
+}
+
+// Según las diapositivas del Tema 3:
+void Arbol::RSI (Nodo *&A) {
+    Nodo *B = A->izq;
+    A->izq = B->der;
+    B->der = A;
+    A->altura = 1 + max(Altura(A->izq), Altura(A->der));
+    B->altura = 1 + max(Altura(B->izq), A->altura);
+    A = B;
+}
+
+void Arbol::RSD (Nodo *&A) {
+    Nodo *B = A->der;
+    A->der = B->izq;
+    B->izq = A;
+    A->altura = 1 + max(Altura(A->izq), Altura(A->der));
+    B->altura = 1 + max(Altura(B->izq), A->altura);
+    A = B;
+}
+
+void Arbol::RDI (Nodo *&A) {
+    RSD(A->izq);
+    RSI(A);
+}
+
+void Arbol::RDD (Nodo *&A) {
+    RSI(A->der);
+    RSD(A);
+}
+
+void Arbol::insertar (Cuac *ref) {
+    insertar2(raiz, ref);
+}
+
+// Siguiendo la diapositiva 69 de T3:
+void Arbol::insertar2(Nodo *&n, Cuac *ref) { 
+    // Si el nodo es nulo, creamos uno nuevo
+    if (n == NULL) {
+        n = new Nodo(ref);
+    }
+    else {
+        // Si el nuevo es anterior (más reciente) -> Subárbol Izquierdo
+        if (ref->es_anterior(*(n->cuac))) {  // ref < n->cuac
+            insertar2(n->izq, ref);
+            
+            // Rebalanceo tras insertar en izquierda
+            if (Altura(n->izq) - Altura(n->der) > 1) {
+                if (ref->es_anterior(*(n->izq->cuac))) // ref < n->izq->cuac
+                    RSI(n); // Caso II
+                else
+                    RDI(n); // Caso ID
+            }
+            else {
+                n->altura = 1 + max(Altura(n->izq), Altura(n->der));
+            }
+        } 
+        else { 
+            // Si es posterior o igual -> Subárbol Derecho
+            insertar2(n->der, ref);
+            
+            // Rebalanceo tras insertar en derecha
+            if (Altura(n->der) - Altura(n->izq) > 1) {
+
+                if (!ref->es_anterior(*(n->der->cuac))) // ref >= n->der->cuac
+                    RSD(n); // Caso DD
+                else
+                    RDD(n); // Caso DI
+            }
+            else {
+                n->altura = 1 + max(Altura(n->izq), Altura(n->der));
+            }
+        }
+    }
+
+}
+
+void Arbol::last(int N) {
+    int cont = 0; // contador de cuacs impresos
+    last2(raiz, N, cont);
+    cout << "Total: " << cont << " cuac" << endl;
+}
+
+void Arbol::last2(Nodo *n, int &N, int &cont) {
+    // Si el nodo es nulo o ya hemos impreso los N mensajes que queríamos, paramos.
+    if (n == NULL || N == 0) return;
+
+    // Recorremos primero la izq (más recientes)
+    last2(n->izq, N, cont);
+
+    // Luego el nodo actual
+    if (N > 0) { // Si aún quedan cuacs por imprimir
+        cont++;
+        cout << cont << ". ";
+        n->cuac->escribir();
+        N--; // Decrementamos N cada vez que imprimimos un cuac
+    } 
+    else {
+        return; // Si ya hemos impreso N cuacs, salimos
+    }
+
+    // Recorremos luego la der (menos recientes)
+    last2(n->der, N, cont);
+}
+
+void Arbol::date(Fecha f1, Fecha f2) {
+    int cont = 0; // contador de cuacs impresos
+    date2(raiz, f1, f2, cont);
+    cout << "Total: " << cont << " cuac" << endl;
+}
 
 
-// ============= CLASE DEL 006 =============
+void Arbol::date2(Nodo *n, Fecha f1, Fecha f2, int &cont) {
+    if (n == NULL) return; // nodo nulo, salimos
+
+    Fecha f = n->cuac->get_fecha();
+
+    // Uso IFs para no recorrer subárboles innecesarios
+
+    // Ir al subárbol izquierdo si la fecha actual no se pasa de f2
+    if (f.es_menor(f2) || f.es_igual(f2)) {
+        date2(n->izq, f1, f2, cont);
+    }
+
+    // Si la fecha actual está entre f1 y f2, lo escribimos
+    if ((f.es_menor(f2) || f.es_igual(f2)) && (f1.es_menor(f) || f1.es_igual(f))) {
+        cont++;
+        cout << cont << ". ";
+        n->cuac->escribir();
+    }
+
+    // Ir al subárbol derecho si la fecha actual no es anterior a f1
+    if (f1.es_menor(f) || f1.es_igual(f)) {
+        date2(n->der, f1, f2, cont);
+    }
+}
+
+
 class DiccionarioCuacs {
 private:
     int contador;
-    TablaHash tabla; // cambiado para 200
+    TablaHash tabla;
+    Arbol arbol;
 public:
     DiccionarioCuacs ();
     void insertar(Cuac nuevo);
@@ -259,24 +456,24 @@ DiccionarioCuacs::DiccionarioCuacs (){
 }
 
 void DiccionarioCuacs::insertar(Cuac nuevo){
-    tabla.insertar(nuevo); // cambiado para 200
-    contador++;
-    
+    Cuac *ref = tabla.insertar(nuevo);
+    arbol.insertar(ref);
+    contador++;   
 }
 
 void DiccionarioCuacs::last(int N) {
+    arbol.last(N); 
 }
 
 void DiccionarioCuacs::follow(string nombre) {
-    tabla.consultar(nombre); // cambiado para 200
+    tabla.consultar(nombre);
 }
 
 void DiccionarioCuacs::date(Fecha f1, Fecha f2) {
+    arbol.date(f1, f2);
 }
-// =========== FIN 006 ===========
 
 
-// ============ 005 ===========
 // variables globales 005
 int contador = 0;
 Cuac actual;
@@ -340,11 +537,7 @@ void Interprete (string comando){
     else if (comando == "tag") procesar_tag();
 }
 
-// ========= FIN 005 =========
 
-
-
-// =============================
 int main() {
     string comando;
 

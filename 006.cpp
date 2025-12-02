@@ -1,5 +1,4 @@
 #include <iostream>
-#include <string>
 #include <list>
 using namespace std;
 
@@ -218,7 +217,6 @@ void DiccionarioCuacs::date(Fecha f1, Fecha f2) {
 
 // ============ 005 ===========
 // variables
-int contador = 0;
 Cuac actual;
 
 // funciones para procesar
