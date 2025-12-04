@@ -1,79 +1,86 @@
-from herramientas import quitar_espacios, es_valido_nif
 import sys
-import re
-import patrones
+import procesamiento
 
-# Función para probar patrones
-def comprobar(dato, lista_patrones):
-   for patron in lista_patrones:
-       if re.fullmatch(patron, dato):
-           return True
-   return False
 
-def procesar_fichero(nombre_fichero):
+def normalizar_fichero(fichero, formato_fecha=2, formato_coord=1):
+   #Opción -n: Lee, valida y muestra normalizado
    try:
-       f = open(nombre_fichero, "r", encoding="utf-8")
-
+       f = open(fichero, "r", encoding="utf-8")
        for linea in f:
-           linea = linea.strip()
+           if not linea.strip(): continue
 
-           # Si la línea está vacía, saltar a la siguiente
-           if not linea:
-               continue
+           # Vamos a usar usamos la validación completa de la Sesión 7
+           datos = procesamiento.validar_entrada(linea)
 
-           lista_campos = quitar_espacios(linea)
+           if datos:
+               # Si es válido, formateamos la salida
+               f_str = procesamiento.mostrar_fecha(datos['fecha'], formato_fecha)
+               c_str = procesamiento.mostrar_coordenada(datos['coordenadas'], formato_coord)
 
-           # Solo seguir si tiene los 6 campos
-           if len(lista_campos) == 6:
-               telefono = lista_campos[0]
-               nif = lista_campos[1]
-               fecha = lista_campos[2]
-               coords = lista_campos[3]
-               precio = lista_campos[5]
+               # Formato de salida: campos separados por "; "
+               # El enunciado dice: tlf normalizado, NIF igual, fecha fmt, coord fmt, prod igual, precio igual
+               print(f"{datos['telefono']}; {datos['nif']}; {f_str}; {c_str}; {datos['producto']}; {datos['precio']}")
 
-               # Comprobar TELÉFONO
-               if re.fullmatch(patrones.patron_telefono, telefono):
-                   res_tlf = "BIEN"
-               else:
-                   res_tlf = "MAL"
-
-               # Comprobar NIF
-               if re.fullmatch(patrones.patron_nif, nif) and es_valido_nif(nif):
-                   res_nif = "BIEN"
-               else:
-                   res_nif = "MAL"
-
-               # Comprobar FECHA
-               lista_fechas = [patrones.patron_fecha_f1, patrones.patron_fecha_f2, patrones.patron_fecha_f3]
-               if comprobar(fecha, lista_fechas):
-                   res_fecha = "BIEN"
-               else:
-                   res_fecha = "MAL"
-
-               # Comprobar COORDENADAS
-               lista_coords = [patrones.patron_coord_f1, patrones.patron_coord_f2, patrones.patron_coord_f3]
-               if comprobar(coords, lista_coords):
-                   res_coord = "BIEN"
-               else:
-                   res_coord = "MAL"
-
-               # Comprobar PRECIO
-               if re.fullmatch(patrones.patron_precio, precio):
-                   res_precio = "BIEN"
-               else:
-                   res_precio = "MAL"
-
-               print(f"Tlf:{res_tlf} | NIF:{res_nif} | Fecha:{res_fecha} | Coord:{res_coord} | Precio:{res_precio}")
+           # Si no es válido, el enunciado dice que se ignora silenciosamente
        f.close()
-
-
    except FileNotFoundError:
-       print("Ha ocurrido un error al leer el fichero")
+       print("Error: Fichero no encontrado")
+
+
+def filtrar_telefono(telefono_buscado, fichero):
+   """Opción -sphone: Muestra líneas originales que coincidan en teléfono"""
+   try:
+       f = open(fichero, "r", encoding="utf-8")
+       for linea in f:
+           if not linea.strip(): continue
+
+           # Validamos para extraer el teléfono normalizado y comparar
+           datos = procesamiento.validar_entrada(linea)
+
+           if datos:
+               # Comparamos el teléfono normalizado
+               if telefono_buscado in datos['telefono']:
+                   print(linea.strip())  # Se muestra la línea original
+       f.close()
+   except FileNotFoundError:
+       print("Error: Fichero no encontrado")
+
 
 def main():
-   if len(sys.argv) > 1:
-       procesar_fichero(sys.argv[1])
-   else:
-       procesar_fichero("log.txt")
+   args = sys.argv
+   if len(args) < 3:
+       print("Uso incorrecto. Ejemplos:")
+       print("  python main.py -n log.txt 2 1")
+       print("  python main.py -sphone +34666777888 log.txt")
+       # Modo prueba si no hay argumentos
+       print("\n--- EJECUTANDO PRUEBA POR DEFECTO (Normalizar log.txt) ---")
+       normalizar_fichero("log.txt", 2, 1)
+       return
+
+   opcion = args[1]
+
+   if opcion == "-n":
+       # Sintaxis: -n fichero [f1 f2]
+       fichero = args[2]
+       fmt_fecha = 2  # Por defecto Anexo
+       fmt_coord = 1  # Por defecto Anexo
+
+       if len(args) == 5:
+           fmt_fecha = int(args[3])
+           fmt_coord = int(args[4])
+
+       normalizar_fichero(fichero, fmt_fecha, fmt_coord)
+
+   elif opcion == "-sphone":
+       # Sintaxis: -sphone telefono fichero
+       if len(args) == 4:
+           telefono = args[2]
+           fichero = args[3]
+           filtrar_telefono(telefono, fichero)
+       else:
+           print("Faltan argumentos para -sphone")
+
+   # Añadir -snif, -stime, etc. siguiendo el mismo patrón
+
 
 main()
